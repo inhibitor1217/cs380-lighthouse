@@ -23,7 +23,7 @@ namespace Engine
     {
         GLuint programId = _material->GetProgram()->GetProgramId();
         glUseProgram(programId);
-
+		
         // Send camera uniform data to glsl program
         glm::mat4 worldTransform = _transform.GetWorldTransform();
 
@@ -34,7 +34,7 @@ namespace Engine
 
         glm::mat4 projectionMatrix = cam->GetProjectionMatrix();
         glUniformMatrix4fv(glGetUniformLocation(programId, "projectionMatrix"), 1, GL_FALSE, (float*)&projectionMatrix);
-
+		
         GLenum drawMode = _mesh->GetDrawMode();
         int numElements = _mesh->GetNumElements();
 

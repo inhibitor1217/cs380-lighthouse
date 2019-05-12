@@ -10,14 +10,12 @@
 namespace Engine
 {
     class RenderObject
-    {
-    private:
-        Transform _transform;
-
+	{
     protected:
         RenderObject();
         Mesh* _mesh;
         Material* _material;
+		Transform _transform;
 		
 		RenderObject *parent = NULL;
 
