@@ -6,7 +6,7 @@ class Ocean : public Engine::RenderObject {
 
 public:
 	Ocean();
-	void Animate(float deltaTime);
+	void Animate(float time, glm::vec3 cameraPosition);
 
 private:
 	Engine::Mesh *__GenerateMesh();

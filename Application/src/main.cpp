@@ -13,10 +13,10 @@
 
 
 GLFWwindow* g_window;
-float g_window_width = 1080.0f;
-float g_window_height = 720.0f;
-int g_framebuffer_width = 1080;
-int g_framebuffer_height = 720;
+float g_window_width = 1920;
+float g_window_height = 1440.0f;
+int g_framebuffer_width = 1920;
+int g_framebuffer_height = 1440;
 
 Engine::Camera *mainCamera;
 
@@ -165,7 +165,7 @@ int main(int argc, char** argv)
 		glClear(GL_COLOR_BUFFER_BIT | (mode_wireframe ? 0 : GL_DEPTH_BUFFER_BIT));
 
 		/* Animate Objects. */
-		oceanTerrain->Animate(elapsed_time);
+		oceanTerrain->Animate(total_time, mainCamera->GetTransform()->GetPosition());
 
 		if (!mode_top_view)
 		{
@@ -178,6 +178,8 @@ int main(int argc, char** argv)
 					glm::rotate(mainCamera->GetTransform()->GetOrientation(), -CAMERA_ROTATE_SPEED * elapsed_time, glm::vec3(0, 1.0f, 0))
 				);
 		}
+
+		
 
 		/* Render pass. */
 		oceanTerrain->Render(mainCamera);

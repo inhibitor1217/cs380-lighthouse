@@ -7,9 +7,9 @@
 #include "Geometry.hpp"
 
 constexpr float PI = 3.14159265;
-constexpr float CHUNK_SIZE = 16;
-constexpr int TERRAIN_SIZE = 3;
-constexpr float START_LOD = 6;
+constexpr float CHUNK_SIZE = 8;
+constexpr int TERRAIN_SIZE = 0;
+constexpr float LOD = 7;
 
 Ocean::Ocean() : Engine::RenderObject()
 {
@@ -21,16 +21,11 @@ Ocean::Ocean() : Engine::RenderObject()
 	SetMaterial(material);
 }
 
-void Ocean::Animate(float deltaTime)
+void Ocean::Animate(float time, glm::vec3 cameraPosition)
 {
-	static float angle = 0.0f;
-	angle += deltaTime;
-
-	_transform.SetOrientation(glm::rotate(
-		glm::mat4(1.0f),
-		angle,
-		glm::vec3(1, 1, 1)
-	));
+	TerrainMaterial *terrainMaterial = reinterpret_cast<TerrainMaterial *>(_material);
+	terrainMaterial->UpdateTime(time);
+	terrainMaterial->UpdateCameraPos(cameraPosition);
 }
 
 int generateChunk(Engine::Mesh *mesh, float center_x, float center_y, int lod, int start_index, int &numVertices)
@@ -89,7 +84,7 @@ Engine::Mesh *Ocean::__GenerateMesh()
 		{
 			numElements += generateChunk(
 				mesh, cx * CHUNK_SIZE, cy * CHUNK_SIZE,
-				START_LOD - 2 * std::max(std::abs(cx), std::abs(cy)),
+				LOD,
 				numVertices, numVertices
 			);
 		}
