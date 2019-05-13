@@ -19,6 +19,7 @@ const vec4 wave[] = {
 };
 const int numWaves = 4;
 
+out float fog;
 out vec3 camera_direction;
 out vec3 world_normal;
 
@@ -50,8 +51,9 @@ void main()
 		);
 	}
 
-    gl_Position = projectionMatrix * inverse(cameraTransform) * vec4(pos + pos_offset, 1);
+    gl_Position = projectionMatrix * inverse(cameraTransform) * worldTransform * vec4(pos + pos_offset, 1);
 
-	camera_direction = cameraPosition - (pos + pos_offset);
+	fog = clamp( 0.15 * length(pos) - 3.0 , 0, 1);
+	camera_direction = cameraPosition - vec3(worldTransform * vec4((pos + pos_offset), 1));
 	world_normal = normalize(cross(pos_dx, pos_dy));
 }

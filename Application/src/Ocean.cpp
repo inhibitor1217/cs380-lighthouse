@@ -7,12 +7,13 @@
 #include "Geometry.hpp"
 
 constexpr float PI = 3.14159265;
-constexpr float CHUNK_SIZE = 8;
-constexpr int TERRAIN_SIZE = 0;
-constexpr float LOD = 7;
 
-Ocean::Ocean() : Engine::RenderObject()
+Ocean::Ocean(float _CHUNK_SIZE, float _TERRAIN_SIZE, float _LOD) : Engine::RenderObject()
 {
+	CHUNK_SIZE = _CHUNK_SIZE;
+	TERRAIN_SIZE = _TERRAIN_SIZE;
+	LOD = _LOD;
+
 	Engine::Mesh *terrainMesh = __GenerateMesh();
 	SetMesh(terrainMesh);
 	
@@ -21,14 +22,16 @@ Ocean::Ocean() : Engine::RenderObject()
 	SetMaterial(material);
 }
 
-void Ocean::Animate(float time, glm::vec3 cameraPosition)
+void Ocean::Update(float time, glm::vec3 cameraPosition, glm::vec3 color, glm::vec3 fogColor)
 {
 	TerrainMaterial *terrainMaterial = reinterpret_cast<TerrainMaterial *>(_material);
 	terrainMaterial->UpdateTime(time);
 	terrainMaterial->UpdateCameraPos(cameraPosition);
+	terrainMaterial->UpdateColor(color);
+	terrainMaterial->UpdateFogColor(fogColor);
 }
 
-int generateChunk(Engine::Mesh *mesh, float center_x, float center_y, int lod, int start_index, int &numVertices)
+int Ocean::generateChunk(Engine::Mesh *mesh, float center_x, float center_y, int lod, int start_index, int &numVertices)
 {
 	int num_grid = (1 << lod);
 	int ret = 0;
@@ -84,7 +87,7 @@ Engine::Mesh *Ocean::__GenerateMesh()
 		{
 			numElements += generateChunk(
 				mesh, cx * CHUNK_SIZE, cy * CHUNK_SIZE,
-				LOD,
+				LOD - std::max(std::abs(cx), std::abs(cy)),
 				numVertices, numVertices
 			);
 		}

@@ -13,10 +13,10 @@
 
 
 GLFWwindow* g_window;
-float g_window_width = 1920;
-float g_window_height = 1440.0f;
-int g_framebuffer_width = 1920;
-int g_framebuffer_height = 1440;
+float g_window_width = 1080;
+float g_window_height = 720.0f;
+int g_framebuffer_width = 1080;
+int g_framebuffer_height = 720;
 
 Engine::Camera *mainCamera;
 
@@ -25,8 +25,15 @@ static bool mode_top_view = false;
 static bool mode_cam_left = false;
 static bool mode_cam_right = false;
 
+static bool mode_render_top = true;
+static bool mode_render_bottom = true;
+
 constexpr float PI = 3.1415926f;
 constexpr float CAMERA_ROTATE_SPEED = 0.5f;
+
+static glm::vec3 ocean_color = glm::vec3((float)0x2A / 255.0f, (float)0x93 / 255.0f, (float)0xD5 / 255.0f);
+static glm::vec3 ocean_sub_color = glm::vec3((float)0x13 / 255.0f, (float)0x55 / 255.0f, (float)0x89 / 255.0f);
+static glm::vec3 sky_color = glm::vec3((float)0xED / 255.0f, (float)0xFA / 255.0f, (float)0xFD / 255.0f);
 
 static void MouseButtonCallback(GLFWwindow* a_window, int a_button, int a_action, int a_mods)
 {
@@ -72,6 +79,12 @@ static void KeyboardCallback(GLFWwindow* a_window, int a_key, int a_scancode, in
 					glm::mat4(1.0f), 0.5f * PI, glm::vec3(1.0f, 0.0f, 0.0f))
 				);
 			}
+			break;
+		case GLFW_KEY_1:
+			mode_render_top = !mode_render_top;
+			break;
+		case GLFW_KEY_2:
+			mode_render_bottom = !mode_render_bottom;
 			break;
 		case GLFW_KEY_LEFT:
 			mode_cam_left = true;
@@ -126,7 +139,10 @@ int main(int argc, char** argv)
 		exit(1);
 	}
 
-	Ocean *oceanTerrain = new Ocean();
+	Ocean *oceanTerrain = new Ocean(16, 2, 8);
+	Ocean *oceanSubsurface = new Ocean(32, 1, 6);
+	oceanSubsurface->GetTransform()->SetPosition(glm::vec3(0, 0, -0.5));
+	oceanSubsurface->GetTransform()->SetOrientation(glm::rotate(glm::mat4(1.0f), 1.0f, glm::vec3(0.0f, 0.0f, 1.0f)));
 
 	mainCamera = new Engine::Camera(
 		glm::vec3(0.0f, 0.0f, 1.0f),
@@ -143,6 +159,9 @@ int main(int argc, char** argv)
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK); // Cull back-facing triangles -> draw only front-facing triangles
 
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
 	glfwSetInputMode(g_window, GLFW_STICKY_KEYS, GL_TRUE);
 	// glfwSetMouseButtonCallback(g_window, MouseButtonCallback);
 	// glfwSetCursorPosCallback(g_window, CursorPosCallback);
@@ -151,6 +170,8 @@ int main(int argc, char** argv)
 	float prev_time = (float)glfwGetTime();
 	float avg_elapsed_time = 1.0f / 60.0f;
 
+	glClearColor(sky_color.x, sky_color.y, sky_color.z, 1);
+
 	/* Loop until the user closes the window */
 	while (!glfwWindowShouldClose(g_window) && glfwGetKey(g_window, GLFW_KEY_ESCAPE) != GLFW_PRESS)
 	{
@@ -158,14 +179,23 @@ int main(int argc, char** argv)
 		float elapsed_time = total_time - prev_time;
 		avg_elapsed_time = avg_elapsed_time * (59.0 / 60.0) + elapsed_time * (1.0 / 60.0);
 		prev_time = total_time;
-		std::cout << "\33[2K\r";
-		std::cout << "FPS: " << floor(1 / avg_elapsed_time);
 
 		/* Clear buffers. */
 		glClear(GL_COLOR_BUFFER_BIT | (mode_wireframe ? 0 : GL_DEPTH_BUFFER_BIT));
 
 		/* Animate Objects. */
-		oceanTerrain->Animate(total_time, mainCamera->GetTransform()->GetPosition());
+		oceanTerrain->Update(
+			total_time, 
+			mainCamera->GetTransform()->GetPosition(),
+			ocean_color,
+			sky_color
+		);
+		oceanSubsurface->Update(
+			0.7f * total_time, 
+			mainCamera->GetTransform()->GetPosition(),
+			ocean_sub_color,
+			sky_color
+		);
 
 		if (!mode_top_view)
 		{
@@ -182,7 +212,10 @@ int main(int argc, char** argv)
 		
 
 		/* Render pass. */
-		oceanTerrain->Render(mainCamera);
+		if (mode_render_bottom)
+			oceanSubsurface->Render(mainCamera);
+		if (mode_render_top)
+			oceanTerrain->Render(mainCamera);
 
 		/* Swap front and back buffers */
 		glfwSwapBuffers(g_window);

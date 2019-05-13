@@ -5,12 +5,6 @@ void TerrainMaterial::CreateMaterial()
 	_program->AttachShader("Resources\\Materials\\TerrainVertexShader.glsl", GL_VERTEX_SHADER);
 	_program->AttachShader("Resources\\Materials\\TerrainFragmentShader.glsl", GL_FRAGMENT_SHADER);
 	_program->LinkShader();
-
-	glm::vec3 initialColor = glm::vec3((float)0x13 / 255.0f, (float)0x55 / 255.0f, (float)0x89 / 255.0f);
-
-	glUseProgram(_program->GetProgramId());
-	GLuint uniformLocation = glGetUniformLocation(_program->GetProgramId(), "color");
-	glUniform3fv(uniformLocation, 1, (float *)&initialColor);
 }
 
 void TerrainMaterial::UpdateColor(glm::vec3 color)
@@ -19,6 +13,14 @@ void TerrainMaterial::UpdateColor(glm::vec3 color)
 	GLuint uniformLocation = glGetUniformLocation(_program->GetProgramId(), "color");
 	glUniform3fv(uniformLocation, 1, (float *)&color);
 }
+
+void TerrainMaterial::UpdateFogColor(glm::vec3 color)
+{
+	glUseProgram(_program->GetProgramId());
+	GLuint uniformLocation = glGetUniformLocation(_program->GetProgramId(), "fog_color");
+	glUniform3fv(uniformLocation, 1, (float *)&color);
+}
+
 
 void TerrainMaterial::UpdateTime(float time)
 {
