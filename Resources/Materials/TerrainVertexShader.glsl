@@ -13,9 +13,9 @@ const float g = 2.00;
 
 const vec4 wave[] = {
     vec4( 1.20, -1.53, 0.05, 1.0),
-	vec4( 3.30, -4.80, 0.04, 1.0),
-	vec4(-1.70, -1.30, 0.07, 1.0),
-	vec4( 3.50, -0.10, 0.03, 1.0),
+	vec4( 0.30, -2.80, 0.04, 1.0),
+	vec4(-1.70, -2.30, 0.07, 1.0),
+	vec4(-0.70, -0.35, 0.10, 1.0),
 };
 const int numWaves = 4;
 
@@ -25,16 +25,17 @@ out vec3 world_normal;
 
 void main()
 {
+	vec2 worldPos = (worldTransform * vec4(pos, 1)).xy;
 	vec3 pos_offset = vec3(0, 0, 0);
 	vec3 pos_dx = vec3(0, 0, 0);
 	vec3 pos_dy = vec3(0, 0, 0);
-
+	
 	for (int i = 0; i < numWaves; i++)
 	{
 		vec2 wave_vector = wave[i].xy;
 		float k = length(wave_vector);
-		float wave_steepness = 1 / (numWaves * pow(k, 3));
-		float phase = dot(wave_vector, pos.xy) - sqrt(g * k) * time;
+		float wave_steepness = 1 / (numWaves * k * k);
+		float phase = dot(wave_vector, worldPos) - sqrt(g * k) * time;
 		pos_offset += wave[i].w * vec3(
 			wave_steepness * cos(phase) * wave_vector,
 			wave[i].z * sin(phase)
@@ -50,7 +51,7 @@ void main()
 			wave[i].z * wave_vector.y * cos(phase)
 		);
 	}
-
+	
     gl_Position = projectionMatrix * inverse(cameraTransform) * worldTransform * vec4(pos + pos_offset, 1);
 
 	fog = clamp( 0.15 * length(pos) - 3.0 , 0, 1);

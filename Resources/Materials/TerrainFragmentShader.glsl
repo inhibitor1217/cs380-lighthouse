@@ -20,8 +20,8 @@ void main()
 
     float diffuse_factor = clamp( dot(n_world_normal, n_light_direction), 0, 1);
 
-	vec3 reflection = 2.0 * dot(n_world_normal, n_light_direction) * n_world_normal - n_light_direction;
-	float specular_factor = pow(dot(reflection, n_camera_direction), 30.0);
+	vec3 n_reflection = normalize(2.0 * dot(n_world_normal, n_light_direction) * n_world_normal - n_light_direction);
+	float specular_factor = pow(dot(n_reflection, n_camera_direction), 20.0);
 
 	vec4 result_color = vec4(diffuse_factor * color + specular_factor * light_color, 0.5);
     out_color = mix(result_color, vec4(fog_color, 1), fog);

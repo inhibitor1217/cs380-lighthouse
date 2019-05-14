@@ -7,10 +7,10 @@
 #include <glm/glm.hpp>
 
 #include <Ocean.hpp>
+#include <PhongMaterial.hpp>
 
 // include Engine
-
-
+#include "ModelLoader.hpp"
 
 GLFWwindow* g_window;
 float g_window_width = 1080;
@@ -30,6 +30,8 @@ static bool mode_render_bottom = true;
 
 constexpr float PI = 3.1415926f;
 constexpr float CAMERA_ROTATE_SPEED = 0.5f;
+
+static float camera_direction = 0.0f;
 
 static glm::vec3 ocean_color = glm::vec3((float)0x2A / 255.0f, (float)0x93 / 255.0f, (float)0xD5 / 255.0f);
 static glm::vec3 ocean_sub_color = glm::vec3((float)0x13 / 255.0f, (float)0x55 / 255.0f, (float)0x89 / 255.0f);
@@ -74,7 +76,7 @@ static void KeyboardCallback(GLFWwindow* a_window, int a_key, int a_scancode, in
 			}
 			else
 			{
-				mainCamera->GetTransform()->SetPosition(glm::vec3(0.0f, 0.0f, 1.0f));
+				mainCamera->GetTransform()->SetPosition(glm::vec3(0.0f, 0.0f, 3.0f));
 				mainCamera->GetTransform()->SetOrientation(glm::rotate(
 					glm::mat4(1.0f), 0.5f * PI, glm::vec3(1.0f, 0.0f, 0.0f))
 				);
@@ -139,14 +141,15 @@ int main(int argc, char** argv)
 		exit(1);
 	}
 
-	Ocean *oceanTerrain = new Ocean(16, 2, 8);
-	Ocean *oceanSubsurface = new Ocean(32, 1, 6);
-	oceanSubsurface->GetTransform()->SetPosition(glm::vec3(0, 0, -0.5));
-	oceanSubsurface->GetTransform()->SetOrientation(glm::rotate(glm::mat4(1.0f), 1.0f, glm::vec3(0.0f, 0.0f, 1.0f)));
+	Ocean *oceanTerrain = new Ocean(8, 3, 8, 0.0f);
+	Ocean *oceanSubsurface = new Ocean(8, 3, 6, -0.5f);
 
 	mainCamera = new Engine::Camera(
-		glm::vec3(0.0f, 0.0f, 1.0f),
-		glm::rotate(glm::mat4(1.0f), 0.5f * PI, glm::vec3(1, 0, 0))
+		glm::vec3(0.0f, 0.0f, 3.0f),
+		glm::rotate(
+			glm::rotate(glm::mat4(1.0f), 0.5f * PI, glm::vec3(1, 0, 0)),
+			camera_direction, glm::vec3(0, 1, 0)
+		)
 	);
 	mainCamera->SetProjection(g_window_width / g_window_height, 70.0, 0.1, 120);
 
@@ -200,22 +203,27 @@ int main(int argc, char** argv)
 		if (!mode_top_view)
 		{
 			if (mode_cam_left)
-				mainCamera->GetTransform()->SetOrientation(
-					glm::rotate(mainCamera->GetTransform()->GetOrientation(), CAMERA_ROTATE_SPEED * elapsed_time, glm::vec3(0, 1.0f, 0))
-				);
+				camera_direction += elapsed_time * CAMERA_ROTATE_SPEED;
 			if (mode_cam_right)
-				mainCamera->GetTransform()->SetOrientation(
-					glm::rotate(mainCamera->GetTransform()->GetOrientation(), -CAMERA_ROTATE_SPEED * elapsed_time, glm::vec3(0, 1.0f, 0))
-				);
+				camera_direction -= elapsed_time * CAMERA_ROTATE_SPEED;
+
+			mainCamera->GetTransform()->SetOrientation(
+				glm::rotate(
+					glm::rotate(glm::mat4(1.0f), 0.5f * PI, glm::vec3(1, 0, 0)), 
+					camera_direction, glm::vec3(0, 1, 0)
+				)
+			);
 		}
 
-		
-
 		/* Render pass. */
+		glEnable(GL_BLEND);
 		if (mode_render_bottom)
-			oceanSubsurface->Render(mainCamera);
+			oceanSubsurface->Render(mainCamera, camera_direction + 0.5f * PI);
 		if (mode_render_top)
-			oceanTerrain->Render(mainCamera);
+			oceanTerrain->Render(mainCamera, camera_direction + 0.5f * PI);
+
+		glDisable(GL_BLEND);
+
 
 		/* Swap front and back buffers */
 		glfwSwapBuffers(g_window);
