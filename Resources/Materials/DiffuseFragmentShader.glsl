@@ -33,6 +33,15 @@ void main()
 		if (lights[i].type == 1)
 		{
 			// Point Light
+			vec3 light_pos         = (worldToCamera * vec4(lights[i].pos, 1)).xyz;
+			vec3 light_direction   = light_pos - fragmentPosition.xyz;
+			float light_length     = length(light_direction);
+			
+			float diffuse_factor   = clamp( dot(n_normal, n_light_direction), 0, 1);
+			
+			intensity += (
+				   diffuse_factor  * lights[i].diffuse_illuminance  * diffuse_reflectance
+			) / pow(light_length, 2);
 		}
 		else if(lights[i].type == 2)
 		{
@@ -43,6 +52,16 @@ void main()
 		else if(lights[i].type == 3)
 		{
 			// Spotlight
+			vec3 light_pos         = (worldToCamera * vec4(lights[i].pos, 1)).xyz;
+			vec3 n_light_vector    = normalize(light_pos - fragmentPosition.xyz);
+			vec3 n_light_direction = normalize((worldToCamera * vec4(lights[i].light_direction, 0)).xyz);
+			
+			float diffuse_factor   = clamp( dot(n_normal, n_light_vector), 0, 1);
+			
+			float attenuation      = pow( dot(n_light_vector, n_light_direction), 50.0 );
+			intensity += (
+				   diffuse_factor  * lights[i].diffuse_illuminance  * diffuse_reflectance 
+			) * attenuation;
 		}
 	}
 

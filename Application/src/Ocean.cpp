@@ -13,9 +13,6 @@ Ocean::Ocean(float _CHUNK_SIZE, int _TERRAIN_SIZE, float _LOD, float center_z)
 
 	__objects = std::vector<Engine::RenderObject *>();
 	
-	__material = new TerrainMaterial();
-	__material->CreateMaterial();
-	
 	generateObjects(center_z);
 }
 
@@ -25,15 +22,10 @@ Ocean::~Ocean()
 		delete obj;
 }
 
-void Ocean::Update(float time, glm::vec3 cameraPosition, glm::vec3 color, glm::vec3 fogColor, std::vector<Light> &lights)
+void Ocean::SetMaterial(Engine::Material *material)
 {
-	__material->UpdateTime(time);
-	__material->UpdateCameraPos(cameraPosition);
-	__material->UpdateAmbientReflectance(color);
-	__material->UpdateDiffuseReflectance(color);
-	__material->UpdateSpecularReflectance(glm::vec3(1, 1, 1));
-	__material->UpdateFogColor(fogColor);
-	__material->UpdateLight(lights);
+	for (auto obj : __objects)
+		obj->SetMaterial(material);
 }
 
 void Ocean::Render(Engine::Camera *camera, float angle)

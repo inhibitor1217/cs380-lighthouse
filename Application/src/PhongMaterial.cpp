@@ -5,8 +5,8 @@
 
 void PhongMaterial::CreateMaterial()
 {
-	_program->AttachShader("Resources\\Materials\\PhongVertexShader.glsl", GL_VERTEX_SHADER);
-	_program->AttachShader("Resources\\Materials\\PhongFragmentShader.glsl", GL_FRAGMENT_SHADER);
+	_program->AttachShader("Resources\\Materials\\VertexShader.glsl", GL_VERTEX_SHADER);
+	_program->AttachShader("Resources\\Materials\\BlinnPhongFragmentShader.glsl", GL_FRAGMENT_SHADER);
 	_program->LinkShader();
 }
 

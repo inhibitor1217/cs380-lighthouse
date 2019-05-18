@@ -12,7 +12,7 @@ class Ocean {
 public:
 	Ocean(float _CHUNK_SIZE, int _TERRAIN_SIZE, float _LOD, float center_z);
 	~Ocean();
-	void Update(float time, glm::vec3 cameraPosition, glm::vec3 color, glm::vec3 fogColor, std::vector<Light> &lights);
+	void SetMaterial(Engine::Material *material);
 	void Render(Engine::Camera *camera, float angle);
 
 private:

@@ -9,6 +9,7 @@
 #include <Ocean.hpp>
 #include <DiffuseMaterial.hpp>
 #include <PhongMaterial.hpp>
+#include <ToonMaterial.hpp>
 
 // include Engine
 #include "ModelLoader.hpp"
@@ -24,9 +25,8 @@ Engine::Camera *mainCamera;
 static bool mode_wireframe = false;
 static bool mode_cam_left = false;
 static bool mode_cam_right = false;
-
-static bool mode_toon_shading = true;
-
+static bool mode_day = true;
+static bool mode_toon_shading = false;
 static bool mode_render_top = true;
 static bool mode_render_bottom = true;
 
@@ -35,6 +35,15 @@ constexpr float CAMERA_ROTATE_SPEED = 0.5f;
 
 static float camera_direction = -0.5 * PI;
 
+static PhongMaterial *phongMaterial;
+static TerrainMaterial *terrainMaterial;
+static ToonMaterial *toonMaterial;
+static ToonMaterial *toonTerrainMaterial;
+
+static Ocean *oceanTerrain;
+static Ocean *oceanSubsurface;
+static std::vector<Engine::RenderObject *> objects;
+
 glm::vec3 genColor(unsigned int color)
 {
 	return glm::vec3((float)((color & 0xFF0000) >> 16) / 255.0f, (float)((color & 0xFF00) >> 8) / 255.0f, (float)(color & 0xFF) / 255.0f);
@@ -42,23 +51,12 @@ glm::vec3 genColor(unsigned int color)
 
 static auto ocean_color        = genColor(0x2A93D5);
 static auto ocean_sub_color    = genColor(0x135589);
-// static auto sky_color          = genColor(0xEDFAFD);
-static auto sky_color          = genColor(0x070B34);
+static auto sky_color          = genColor(0xEDFAFD);
 static auto island_color       = genColor(0x95571F);
 static auto lighthouse_color_1 = genColor(0xC54021);
 static auto lighthouse_color_2 = genColor(0xC9C9C9);
 
 static std::vector<Light> lights;
-
-static void MouseButtonCallback(GLFWwindow* a_window, int a_button, int a_action, int a_mods)
-{
-	
-}
-
-static void CursorPosCallback(GLFWwindow* a_window, double a_xpos, double a_ypos)
-{
-
-}
 
 static void KeyboardCallback(GLFWwindow* a_window, int a_key, int a_scancode, int a_action, int a_mods)
 {
@@ -91,6 +89,42 @@ static void KeyboardCallback(GLFWwindow* a_window, int a_key, int a_scancode, in
 			break;
 		case GLFW_KEY_RIGHT:
 			mode_cam_right = true;
+			break;
+		case GLFW_KEY_R:
+			mode_day = !mode_day;
+			if (mode_day)
+			{
+				lights[0].enabled = true;
+				lights[2].enabled = false;
+
+				sky_color = genColor(0xEDFAFD);
+				glClearColor(sky_color.x, sky_color.y, sky_color.z, 1);
+			}
+			else
+			{
+				lights[0].enabled = false;
+				lights[2].enabled = true;
+
+				sky_color = genColor(0x070B34);
+				glClearColor(sky_color.x, sky_color.y, sky_color.z, 1);
+			}
+			break;
+		case GLFW_KEY_T:
+			mode_toon_shading = !mode_toon_shading;
+			if (mode_toon_shading)
+			{
+				oceanTerrain->SetMaterial(toonTerrainMaterial);
+				oceanSubsurface->SetMaterial(toonTerrainMaterial);
+				for (auto obj : objects)
+					obj->SetMaterial(toonMaterial);
+			}
+			else
+			{
+				oceanTerrain->SetMaterial(terrainMaterial);
+				oceanSubsurface->SetMaterial(terrainMaterial);
+				for (auto obj : objects)
+					obj->SetMaterial(phongMaterial);
+			}
 			break;
 		}
 	}
@@ -139,8 +173,8 @@ int main(int argc, char** argv)
 		exit(1);
 	}
 
-	Ocean *oceanTerrain = new Ocean(16, 3, 8, 0.0f);
-	Ocean *oceanSubsurface = new Ocean(16, 3, 6, -0.5f);
+	oceanTerrain = new Ocean(16, 3, 8, 0.0f);
+	oceanSubsurface = new Ocean(16, 3, 6, -0.5f);
 
 	mainCamera = new Engine::Camera(
 		glm::vec3(0.0f, 0.0f, 2.0f),
@@ -160,19 +194,32 @@ int main(int argc, char** argv)
 	Engine::Mesh *lighthouseMesh2 = new Engine::Mesh();
 	loader->GenerateMesh(lighthouseMesh2, 2);
 
-	DiffuseMaterial *diffuseMaterial = new DiffuseMaterial();
-	diffuseMaterial->CreateMaterial();
+	phongMaterial = new PhongMaterial();
+	phongMaterial->CreateMaterial();
+	terrainMaterial = new TerrainMaterial();
+	terrainMaterial->CreateMaterial();
+	toonMaterial = new ToonMaterial();
+	toonMaterial->CreateMaterial(false);
+	toonTerrainMaterial = new ToonMaterial();
+	toonTerrainMaterial->CreateMaterial(true);
 
-	Engine::RenderObject *lighthouseIslandObj = new Engine::RenderObject(lighthouseIslandMesh, diffuseMaterial);
+	oceanTerrain->SetMaterial(terrainMaterial);
+	oceanSubsurface->SetMaterial(terrainMaterial);
+
+	Engine::RenderObject *lighthouseIslandObj = new Engine::RenderObject(lighthouseIslandMesh, phongMaterial);
 	lighthouseIslandObj->GetTransform()->SetPosition(glm::vec3(30, -20, 0));
-	Engine::RenderObject *lighthouseObj1 = new Engine::RenderObject(lighthouseMesh1, diffuseMaterial);
+	Engine::RenderObject *lighthouseObj1 = new Engine::RenderObject(lighthouseMesh1, phongMaterial);
 	lighthouseObj1->GetTransform()->AddParent(lighthouseIslandObj->GetTransform());
-	Engine::RenderObject *lighthouseObj2 = new Engine::RenderObject(lighthouseMesh2, diffuseMaterial);
+	Engine::RenderObject *lighthouseObj2 = new Engine::RenderObject(lighthouseMesh2, phongMaterial);
 	lighthouseObj2->GetTransform()->AddParent(lighthouseIslandObj->GetTransform());
+
+	objects.push_back(lighthouseIslandObj);
+	objects.push_back(lighthouseObj1);
+	objects.push_back(lighthouseObj2);
 	
 	lights.push_back(Light());
 	lights[0].type = DirectionalLight;
-	lights[0].enabled = false;
+	lights[0].enabled = true;
 	lights[0].light_direction = glm::vec3(1, 1, 1);
 	lights[0].diffuse_illuminance = sky_color;
 	lights[0].specular_illuminance = sky_color;
@@ -186,7 +233,7 @@ int main(int argc, char** argv)
 
 	lights.push_back(Light());
 	lights[2].type = Spotlight;
-	lights[2].enabled = true;
+	lights[2].enabled = false;
 	lights[2].transform.SetPosition(glm::vec3(30, -20, 10));
 	lights[2].diffuse_illuminance = glm::vec3(3, 3, 3);
 	lights[2].specular_illuminance = glm::vec3(3, 3, 3);
@@ -203,8 +250,6 @@ int main(int argc, char** argv)
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	glfwSetInputMode(g_window, GLFW_STICKY_KEYS, GL_TRUE);
-	// glfwSetMouseButtonCallback(g_window, MouseButtonCallback);
-	// glfwSetCursorPosCallback(g_window, CursorPosCallback);
 	glfwSetKeyCallback(g_window, KeyboardCallback);
 
 	float prev_time = (float)glfwGetTime();
@@ -230,21 +275,6 @@ int main(int argc, char** argv)
 			10
 		);
 
-		oceanTerrain->Update(
-			total_time, 
-			mainCamera->GetTransform()->GetPosition(),
-			ocean_color,
-			sky_color,
-			lights
-		);
-		oceanSubsurface->Update(
-			0.7f * total_time, 
-			mainCamera->GetTransform()->GetPosition(),
-			ocean_sub_color,
-			sky_color,
-			lights
-		);
-
 		if (mode_cam_left)
 			camera_direction += elapsed_time * CAMERA_ROTATE_SPEED;
 		if (mode_cam_right)
@@ -261,33 +291,70 @@ int main(int argc, char** argv)
 
 		if (!mode_toon_shading)
 		{
+			terrainMaterial->UpdateCameraPos(mainCamera->GetTransform()->GetPosition());
+			terrainMaterial->UpdateAmbientReflectance(ocean_color);
+			terrainMaterial->UpdateDiffuseReflectance(ocean_color);
+			terrainMaterial->UpdateSpecularReflectance(glm::vec3(1, 1, 1));
+			terrainMaterial->UpdateFogColor(sky_color);
+			terrainMaterial->UpdateLight(lights);
+
 			glEnable(GL_BLEND);
 			if (mode_render_bottom)
+			{
+				terrainMaterial->UpdateTime(0.7f * total_time);
 				oceanSubsurface->Render(mainCamera, camera_direction + 0.5f * PI);
+			}
 			if (mode_render_top)
+			{
+				terrainMaterial->UpdateTime(total_time);
 				oceanTerrain->Render(mainCamera, camera_direction + 0.5f * PI);
+			}
 			glDisable(GL_BLEND);
 
-			diffuseMaterial->UpdateLight(lights);
-			diffuseMaterial->UpdateDiffuseReflectance(island_color);
+			phongMaterial->UpdateLight(lights);
+			phongMaterial->UpdateSpecularReflectance(glm::vec3(0, 0, 0));
+
+			phongMaterial->UpdateAmbientReflectance(island_color);
+			phongMaterial->UpdateDiffuseReflectance(island_color);
 			lighthouseIslandObj->Render(mainCamera);
-			diffuseMaterial->UpdateDiffuseReflectance(lighthouse_color_1);
+
+			phongMaterial->UpdateAmbientReflectance(lighthouse_color_1);
+			phongMaterial->UpdateDiffuseReflectance(lighthouse_color_1);
 			lighthouseObj1->Render(mainCamera);
-			diffuseMaterial->UpdateDiffuseReflectance(lighthouse_color_2);
+
+			phongMaterial->UpdateAmbientReflectance(lighthouse_color_2);
+			phongMaterial->UpdateDiffuseReflectance(lighthouse_color_2);
 			lighthouseObj2->Render(mainCamera);
 		}
 		else
 		{
-			// Toon shading
-			if (mode_render_top)
-				oceanTerrain->Render(mainCamera, camera_direction + 0.5f * PI);
+			toonTerrainMaterial->UpdateCameraPos(mainCamera->GetTransform()->GetPosition());
+			toonTerrainMaterial->UpdateAmbientReflectance(ocean_color);
+			toonTerrainMaterial->UpdateDiffuseReflectance(ocean_color);
+			toonTerrainMaterial->UpdateSpecularReflectance(glm::vec3(1, 1, 1));
+			toonTerrainMaterial->UpdateFogColor(sky_color);
+			toonTerrainMaterial->UpdateLight(lights);
 
-			diffuseMaterial->UpdateLight(lights);
-			diffuseMaterial->UpdateDiffuseReflectance(island_color);
+			// Toon shading
+			glEnable(GL_BLEND);
+			if (mode_render_bottom)
+			{
+				toonTerrainMaterial->UpdateTime(0.7f * total_time);
+				oceanSubsurface->Render(mainCamera, camera_direction + 0.5f * PI);
+			}
+			if (mode_render_top)
+			{
+				toonTerrainMaterial->UpdateTime(total_time);
+				oceanTerrain->Render(mainCamera, camera_direction + 0.5f * PI);
+			}
+			glDisable(GL_BLEND);
+
+			toonMaterial->UpdateLight(lights);
+			toonMaterial->UpdateDiffuseReflectance(island_color);
 			lighthouseIslandObj->Render(mainCamera);
-			diffuseMaterial->UpdateDiffuseReflectance(lighthouse_color_1);
+			toonMaterial->UpdateDiffuseReflectance(lighthouse_color_1);
 			lighthouseObj1->Render(mainCamera);
-			diffuseMaterial->UpdateDiffuseReflectance(lighthouse_color_2);
+			toonMaterial->UpdateDiffuseReflectance(lighthouse_color_2);
 			lighthouseObj2->Render(mainCamera);
 		}
 
