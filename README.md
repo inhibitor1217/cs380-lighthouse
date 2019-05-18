@@ -7,5 +7,5 @@ KAIST CS380 - Introduction to Computer Graphics
 ![spotlight](cs380-spot-light.PNG)
 
 - Toon shading
-![toon-1](cs380-toon.PNG)
+![toon-1](cs380-toon.png)
 ![toon-2](cs380-toon-night.PNG)
