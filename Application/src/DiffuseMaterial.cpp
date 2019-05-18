@@ -6,7 +6,7 @@
 void DiffuseMaterial::CreateMaterial()
 {
     _program->AttachShader("Resources\\Materials\\VertexShader.glsl", GL_VERTEX_SHADER);
-    _program->AttachShader("Resources\\Materials\\DiffuseFragmentShader.glsl", GL_FRAGMENT_SHADER);
+    _program->AttachShader("Resources\\Materials\\BlinnPhongToonFragmentShader.glsl", GL_FRAGMENT_SHADER);
     _program->LinkShader();
 
     glUseProgram(_program->GetProgramId());

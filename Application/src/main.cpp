@@ -25,13 +25,15 @@ static bool mode_wireframe = false;
 static bool mode_cam_left = false;
 static bool mode_cam_right = false;
 
+static bool mode_toon_shading = true;
+
 static bool mode_render_top = true;
 static bool mode_render_bottom = true;
 
 constexpr float PI = 3.1415926f;
 constexpr float CAMERA_ROTATE_SPEED = 0.5f;
 
-static float camera_direction = 0.0f;
+static float camera_direction = -0.5 * PI;
 
 glm::vec3 genColor(unsigned int color)
 {
@@ -40,7 +42,8 @@ glm::vec3 genColor(unsigned int color)
 
 static auto ocean_color        = genColor(0x2A93D5);
 static auto ocean_sub_color    = genColor(0x135589);
-static auto sky_color          = genColor(0xEDFAFD);
+// static auto sky_color          = genColor(0xEDFAFD);
+static auto sky_color          = genColor(0x070B34);
 static auto island_color       = genColor(0x95571F);
 static auto lighthouse_color_1 = genColor(0xC54021);
 static auto lighthouse_color_2 = genColor(0xC9C9C9);
@@ -169,7 +172,7 @@ int main(int argc, char** argv)
 	
 	lights.push_back(Light());
 	lights[0].type = DirectionalLight;
-	lights[0].enabled = true;
+	lights[0].enabled = false;
 	lights[0].light_direction = glm::vec3(1, 1, 1);
 	lights[0].diffuse_illuminance = sky_color;
 	lights[0].specular_illuminance = sky_color;
@@ -197,7 +200,6 @@ int main(int argc, char** argv)
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK); // Cull back-facing triangles -> draw only front-facing triangles
 
-	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	glfwSetInputMode(g_window, GLFW_STICKY_KEYS, GL_TRUE);
@@ -257,22 +259,37 @@ int main(int argc, char** argv)
 
 		/* Render pass. */
 
-		glEnable(GL_BLEND);
-		if (mode_render_bottom)
-			oceanSubsurface->Render(mainCamera, camera_direction + 0.5f * PI);
-		if (mode_render_top)
-			oceanTerrain->Render(mainCamera, camera_direction + 0.5f * PI);
+		if (!mode_toon_shading)
+		{
+			glEnable(GL_BLEND);
+			if (mode_render_bottom)
+				oceanSubsurface->Render(mainCamera, camera_direction + 0.5f * PI);
+			if (mode_render_top)
+				oceanTerrain->Render(mainCamera, camera_direction + 0.5f * PI);
+			glDisable(GL_BLEND);
 
-		diffuseMaterial->UpdateLight(lights);
+			diffuseMaterial->UpdateLight(lights);
+			diffuseMaterial->UpdateDiffuseReflectance(island_color);
+			lighthouseIslandObj->Render(mainCamera);
+			diffuseMaterial->UpdateDiffuseReflectance(lighthouse_color_1);
+			lighthouseObj1->Render(mainCamera);
+			diffuseMaterial->UpdateDiffuseReflectance(lighthouse_color_2);
+			lighthouseObj2->Render(mainCamera);
+		}
+		else
+		{
+			// Toon shading
+			if (mode_render_top)
+				oceanTerrain->Render(mainCamera, camera_direction + 0.5f * PI);
 
-		diffuseMaterial->UpdateDiffuseReflectance(island_color);
-		lighthouseIslandObj->Render(mainCamera);
-		diffuseMaterial->UpdateDiffuseReflectance(lighthouse_color_1);
-		lighthouseObj1->Render(mainCamera);
-		diffuseMaterial->UpdateDiffuseReflectance(lighthouse_color_2);
-		lighthouseObj2->Render(mainCamera);
-
-		glDisable(GL_BLEND);
+			diffuseMaterial->UpdateLight(lights);
+			diffuseMaterial->UpdateDiffuseReflectance(island_color);
+			lighthouseIslandObj->Render(mainCamera);
+			diffuseMaterial->UpdateDiffuseReflectance(lighthouse_color_1);
+			lighthouseObj1->Render(mainCamera);
+			diffuseMaterial->UpdateDiffuseReflectance(lighthouse_color_2);
+			lighthouseObj2->Render(mainCamera);
+		}
 
 
 		/* Swap front and back buffers */

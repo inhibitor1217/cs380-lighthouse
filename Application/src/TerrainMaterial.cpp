@@ -6,7 +6,7 @@
 void TerrainMaterial::CreateMaterial()
 {
 	_program->AttachShader("Resources\\Materials\\TerrainVertexShader.glsl", GL_VERTEX_SHADER);
-	_program->AttachShader("Resources\\Materials\\BlinnPhongFragmentShader.glsl", GL_FRAGMENT_SHADER);
+	_program->AttachShader("Resources\\Materials\\BlinnPhongToonFragmentShader.glsl", GL_FRAGMENT_SHADER);
 	_program->LinkShader();
 }
 
