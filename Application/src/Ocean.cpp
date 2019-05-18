@@ -25,12 +25,13 @@ Ocean::~Ocean()
 		delete obj;
 }
 
-void Ocean::Update(float time, glm::vec3 cameraPosition, glm::vec3 color, glm::vec3 fogColor)
+void Ocean::Update(float time, glm::vec3 cameraPosition, glm::vec3 color, glm::vec3 fogColor, std::vector<Light> &lights)
 {
 	__material->UpdateTime(time);
 	__material->UpdateCameraPos(cameraPosition);
-	__material->UpdateColor(color);
+	__material->UpdateDiffuseReflectance(color);
 	__material->UpdateFogColor(fogColor);
+	__material->UpdateLight(lights);
 }
 
 void Ocean::Render(Engine::Camera *camera, float angle)

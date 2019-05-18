@@ -3,12 +3,16 @@
 #include "RenderObject.hpp"
 #include "TerrainMaterial.hpp"
 
+constexpr int NUM_WAVES = 4;
+constexpr float WAVE_VECTOR_LENGTH_MIN = 0.7;
+constexpr float WAVE_VECTOR_LENGTH_MAX = 5.0;
+
 class Ocean {
 
 public:
 	Ocean(float _CHUNK_SIZE, int _TERRAIN_SIZE, float _LOD, float center_z);
 	~Ocean();
-	void Update(float time, glm::vec3 cameraPosition, glm::vec3 color, glm::vec3 fogColor);
+	void Update(float time, glm::vec3 cameraPosition, glm::vec3 color, glm::vec3 fogColor, std::vector<Light> &lights);
 	void Render(Engine::Camera *camera, float angle);
 
 private:

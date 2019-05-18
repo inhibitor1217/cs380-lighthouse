@@ -2,6 +2,9 @@
 
 layout(location = 0) in vec3 pos;
 
+out vec4 fragmentPosition;
+out vec4 fragmentNormal;
+
 uniform mat4 worldTransform;
 uniform mat4 cameraTransform;
 uniform mat4 projectionMatrix;
@@ -13,15 +16,23 @@ const float g = 2.00;
 
 const vec4 wave[] = {
     vec4( 1.20, -1.53, 0.05, 1.0),
-	vec4( 0.30, -2.80, 0.04, 1.0),
-	vec4(-1.70, -2.30, 0.07, 1.0),
-	vec4(-0.70, -0.35, 0.10, 1.0),
+	vec4( 1.30, -4.80, 0.02, 1.0),
+	vec4(-1.70, -3.30, 0.04, 1.0),
+	vec4(-0.50, -0.35, 0.08, 1.0),
+	vec4(-0.29,  0.71, 0.05, 1.0),
+	vec4( 0.17, -0.35, 0.06, 1.0),
 };
-const int numWaves = 4;
+const int numWaves = 6;
 
-out float fog;
-out vec3 camera_direction;
-out vec3 world_normal;
+mat4 NormalMatrix(mat4 MVM)
+{
+	mat4 invm = inverse(MVM);
+	invm[0][3] = 0;
+	invm[1][3] = 0;
+	invm[2][3] = 0;
+
+	return transpose(invm);
+}
 
 void main()
 {
@@ -53,8 +64,12 @@ void main()
 	}
 	
     gl_Position = projectionMatrix * inverse(cameraTransform) * worldTransform * vec4(pos + pos_offset, 1);
+	
+	mat4 MVM = inverse(cameraTransform) * worldTransform;
+	mat4 NVM = NormalMatrix(MVM);
 
-	fog = clamp( 0.15 * length(pos) - 3.0 , 0, 1);
-	camera_direction = cameraPosition - vec3(worldTransform * vec4((pos + pos_offset), 1));
-	world_normal = normalize(cross(pos_dx, pos_dy));
+	vec4 wPosition = MVM * vec4(pos + pos_offset, 1);
+	fragmentPosition = wPosition;
+	fragmentNormal = NVM * vec4(cross(pos_dx, pos_dy), 0);
+	gl_Position = projectionMatrix * wPosition;
 }

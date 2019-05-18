@@ -22,5 +22,8 @@ struct Light
 	int enabled = 1;		// Your light should be able to turn on/off independently!
 
 	Engine::Transform transform;
+	glm::vec3 light_direction;
+
 	glm::vec3 diffuse_illuminance;
+	glm::vec3 specular_illuminance;
 };

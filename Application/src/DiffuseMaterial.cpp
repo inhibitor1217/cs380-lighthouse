@@ -26,22 +26,43 @@ void DiffuseMaterial::UpdateLight(std::vector<Light> &lights)
 	GLuint pid = _program->GetProgramId();
 	glUseProgram(pid);
 	
-	int numLights = MIN(lights.size(), MAX_LIGHTS);
-	GLuint location = glGetUniformLocation(pid, "numLights");
-	glUniform1i(location, numLights);
+	int numLights = 0;
+	GLuint location;
 
 	char buf[BUF_SIZE];
-	for (int i = 0; i < numLights; i++)
+	for (int i = 0; i < lights.size(); i++)
 	{
-		snprintf(buf, BUF_SIZE, "lights[%d].diffuse_illuminance", i);
-		location = glGetUniformLocation(pid, buf);
-		glUniform3fv(location, 1, (float*)&(lights[i].diffuse_illuminance));
+		if (lights[i].enabled)
+		{
+			numLights++;
+			if (numLights > MAX_LIGHTS)
+				break;
 
-		glm::mat4 world_transform = lights[i].transform.GetWorldTransform();
-		glm::vec4 local_pos = glm::vec4(0.0, 0.0, 0.0, 1.0);
-		glm::vec4 world_pos = world_transform * local_pos;
-		snprintf(buf, BUF_SIZE, "lights[%d].pos", i);
-		location = glGetUniformLocation(pid, buf);
-		glUniform3fv(location, 1, (float*)&(world_pos));
+			snprintf(buf, BUF_SIZE, "lights[%d].type", i);
+			location = glGetUniformLocation(pid, buf);
+			glUniform1i(location, lights[i].type);
+
+			snprintf(buf, BUF_SIZE, "lights[%d].diffuse_illuminance", i);
+			location = glGetUniformLocation(pid, buf);
+			glUniform3fv(location, 1, (float*)&(lights[i].diffuse_illuminance));
+
+			snprintf(buf, BUF_SIZE, "lights[%d].specular_illuminance", i);
+			location = glGetUniformLocation(pid, buf);
+			glUniform3fv(location, 1, (float*)&(lights[i].specular_illuminance));
+
+			snprintf(buf, BUF_SIZE, "lights[%d].light_direction", i);
+			location = glGetUniformLocation(pid, buf);
+			glUniform3fv(location, 1, (float*)&(lights[i].light_direction));
+
+			glm::mat4 world_transform = lights[i].transform.GetWorldTransform();
+			glm::vec4 local_pos = glm::vec4(0.0, 0.0, 0.0, 1.0);
+			glm::vec4 world_pos = world_transform * local_pos;
+			snprintf(buf, BUF_SIZE, "lights[%d].pos", i);
+			location = glGetUniformLocation(pid, buf);
+			glUniform3fv(location, 1, (float*)&(world_pos));
+		}
 	}
+
+	location = glGetUniformLocation(pid, "numLights");
+	glUniform1i(location, numLights);
 }
