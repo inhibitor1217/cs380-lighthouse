@@ -34,32 +34,32 @@ void DiffuseMaterial::UpdateLight(std::vector<Light> &lights)
 	{
 		if (lights[i].enabled)
 		{
-			numLights++;
-			if (numLights > MAX_LIGHTS)
-				break;
-
-			snprintf(buf, BUF_SIZE, "lights[%d].type", i);
+			snprintf(buf, BUF_SIZE, "lights[%d].type", numLights);
 			location = glGetUniformLocation(pid, buf);
 			glUniform1i(location, lights[i].type);
 
-			snprintf(buf, BUF_SIZE, "lights[%d].diffuse_illuminance", i);
+			snprintf(buf, BUF_SIZE, "lights[%d].diffuse_illuminance", numLights);
 			location = glGetUniformLocation(pid, buf);
 			glUniform3fv(location, 1, (float*)&(lights[i].diffuse_illuminance));
 
-			snprintf(buf, BUF_SIZE, "lights[%d].specular_illuminance", i);
+			snprintf(buf, BUF_SIZE, "lights[%d].specular_illuminance", numLights);
 			location = glGetUniformLocation(pid, buf);
 			glUniform3fv(location, 1, (float*)&(lights[i].specular_illuminance));
 
-			snprintf(buf, BUF_SIZE, "lights[%d].light_direction", i);
+			snprintf(buf, BUF_SIZE, "lights[%d].light_direction", numLights);
 			location = glGetUniformLocation(pid, buf);
 			glUniform3fv(location, 1, (float*)&(lights[i].light_direction));
 
 			glm::mat4 world_transform = lights[i].transform.GetWorldTransform();
 			glm::vec4 local_pos = glm::vec4(0.0, 0.0, 0.0, 1.0);
 			glm::vec4 world_pos = world_transform * local_pos;
-			snprintf(buf, BUF_SIZE, "lights[%d].pos", i);
+			snprintf(buf, BUF_SIZE, "lights[%d].pos", numLights);
 			location = glGetUniformLocation(pid, buf);
 			glUniform3fv(location, 1, (float*)&(world_pos));
+
+			numLights++;
+			if (numLights >= MAX_LIGHTS)
+				break;
 		}
 	}
 

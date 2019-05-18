@@ -174,6 +174,20 @@ int main(int argc, char** argv)
 	lights[0].diffuse_illuminance = sky_color;
 	lights[0].specular_illuminance = sky_color;
 
+	lights.push_back(Light());
+	lights[1].type = PointLight;
+	lights[1].enabled = false;
+	lights[1].transform.SetPosition(glm::vec3(10, 0, 3));
+	lights[1].diffuse_illuminance = glm::vec3(200, 200, 200);
+	lights[1].specular_illuminance = glm::vec3(200, 200, 200);
+
+	lights.push_back(Light());
+	lights[2].type = Spotlight;
+	lights[2].enabled = true;
+	lights[2].transform.SetPosition(glm::vec3(30, -20, 10));
+	lights[2].diffuse_illuminance = glm::vec3(3, 3, 3);
+	lights[2].specular_illuminance = glm::vec3(3, 3, 3);
+
 	// Enable depth test
 	glEnable(GL_DEPTH_TEST);
 
@@ -208,6 +222,12 @@ int main(int argc, char** argv)
 		glClear(GL_COLOR_BUFFER_BIT | (mode_wireframe ? 0 : GL_DEPTH_BUFFER_BIT));
 
 		/* Animate Objects. */
+		lights[2].light_direction = glm::vec3(
+			25 * cos(0.4 * total_time),
+			25 * sin(0.4 * total_time),
+			10
+		);
+
 		oceanTerrain->Update(
 			total_time, 
 			mainCamera->GetTransform()->GetPosition(),

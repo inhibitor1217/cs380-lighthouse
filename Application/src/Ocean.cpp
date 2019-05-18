@@ -29,7 +29,9 @@ void Ocean::Update(float time, glm::vec3 cameraPosition, glm::vec3 color, glm::v
 {
 	__material->UpdateTime(time);
 	__material->UpdateCameraPos(cameraPosition);
+	__material->UpdateAmbientReflectance(color);
 	__material->UpdateDiffuseReflectance(color);
+	__material->UpdateSpecularReflectance(glm::vec3(1, 1, 1));
 	__material->UpdateFogColor(fogColor);
 	__material->UpdateLight(lights);
 }
