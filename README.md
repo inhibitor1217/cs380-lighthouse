@@ -1,5 +1,7 @@
-# cs380_lighthouse
+# cs380-lighting
 KAIST CS380 - Introduction to Computer Graphics
+
+DO NOT USE THIS PROJECT FOR YOUR OWN ASSIGNMENT.
 
 - Light sources
 ![point](cs380-point-light.PNG)
